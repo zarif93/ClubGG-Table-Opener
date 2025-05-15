@@ -1,0 +1,30 @@
+# Virtual environments
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Compiled files
+*.out
+*.o
+
+# Python packages
+*.egg-info/
+
+# Sensitive files
+.env
+config.yaml

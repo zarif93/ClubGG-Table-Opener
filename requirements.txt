@@ -1,0 +1,7 @@
+python-dotenv==1.1.0
+requests==2.32.3
+pytz==2025.2
+python-telegram-bot==22.0
+playwright
+convertdate
+astral
