@@ -1,123 +1,68 @@
-import time
-from datetime import datetime, timedelta
-from convertdate import hebrew
-from astral import LocationInfo
-from astral.sun import sun
-import pytz
-import telebot
+from clubgg_session import is_logged_in
+from datetime import datetime
 
-# =======================
-# Telegram Configuration
-# =======================
-TELEGRAM_TOKEN = '7813630651:AAEuWgeN19Uo5kX1QVE-nrRiUSyKVJXvhZk'  # החלף את זה בטוקן שלך
-CHAT_ID = '999682317'  # הכנס את ה-Chat ID שלך
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+login = is_logged_in()
 
-# =======================
-# Location & Timezone
-# =======================
-LOCATION = LocationInfo("Tel Aviv", "Israel", "Asia/Jerusalem", 32.0853, 34.7818)
-TIMEZONE = pytz.timezone("Asia/Jerusalem")
+# Get 
+def get_players_data(session):
 
-# =======================
-# Jewish Holidays List
-# =======================
-JEWISH_HOLIDAYS = {
-    (1, 15),  # Pesach
-    (3, 6),   # Shavuot
-    (7, 1),   # Rosh Hashanah
-    (7, 10),  # Yom Kippur
-    (7, 15),  # Sukkot
-    (7, 22),  # Shemini Atzeret
-    (9, 25),  # Hanukkah
-}
+    url = "https://union.clubgg.com/"
 
-# =======================
-# Helper Functions
-# =======================
-def days_in_hebrew_month(year, month):
-    start = hebrew.to_jd(year, month, 1)
-    if month == 13:
-        next_month, next_year = 1, year + 1
-    elif month == 12 and not hebrew.leap(year):
-        next_month, next_year = 1, year + 1
-    else:
-        next_month, next_year = month + 1, year
-    start_next = hebrew.to_jd(next_year, next_month, 1)
-    return int(round(start_next - start))
+    data = {
+        "iam" : "list",
+        "mtypestr" : 0,
+        "clubstr" : 0,
+        "cur_page" : 1,
+        "column" : "lastplay",
+        "asc" : 2
+    }
 
-def is_eve_of_shabbat(now):
-    if now.weekday() == 4:  # Friday
-        s = sun(LOCATION.observer, date=now.date(), tzinfo=TIMEZONE)
-        sunset = s['sunset']
-        return now >= (sunset - timedelta(minutes=20))
-    return False
+    response = session.post(f"{url}memberlist", data=data)
 
-def is_eve_of_holiday(h_year, h_month, h_day):
-    days_in_month = days_in_hebrew_month(h_year, h_month)
-    next_day, next_month, next_year = h_day + 1, h_month, h_year
+    print(response.json())
+    
+    user_id = response.json()["DATA"][0]["f2"]
+    username = response.json()["DATA"][0]["f2"]
+    club = response.json()["DATA"][0]["f3"]
+    role = response.json()["DATA"][0]["f4"]
+    rake = response.json()["DATA"][0]["f9"]
+    winlose = response.json()["DATA"][0]["f11"]
 
-    if next_day > days_in_month:
-        next_day = 1
-        if h_month == 13:
-            next_month, next_year = 1, h_year + 1
-        elif h_month == 12 and not hebrew.leap(h_year):
-            next_month, next_year = 1, h_year + 1
-        else:
-            next_month += 1
+    data = {
+        "iam" : "set",
+        "memberno" : response.json()["DATA"][0]["uno"],
+        "memberclub" : response.json()["DATA"][0]["cno"]
+    }
 
-    return (next_month, next_day) in JEWISH_HOLIDAYS
+    response = session.post(f"{url}memberinfo", data=data)
 
-def wait_until_after_shabbat_or_holiday():
-    global running
-    now = datetime.now(TIMEZONE)
-    h_year, h_month, h_day = hebrew.from_gregorian(now.year, now.month, now.day)
+    data = {
+        "iam" : "info",
+        "from" : "05/12/2025",
+        "to" : "05/19/2025",
+        "game" : 0
+    }
 
-    if is_eve_of_shabbat(now) or is_eve_of_holiday(h_year, h_month, h_day):
-        s = sun(LOCATION.observer, date=now.date(), tzinfo=TIMEZONE)
-        sunset_today = s['sunset']
-        next_day = now + timedelta(days=1)
-        s_next = sun(LOCATION.observer, date=next_day.date(), tzinfo=TIMEZONE)
-        sunset_next_day = s_next['sunset']
+    response = session.post(f"{url}memberinfo", data=data)
 
-        start_sleep = sunset_today - timedelta(minutes=20)
-        end_sleep = sunset_next_day + timedelta(minutes=15)
+    #print(response.json()["INFO"])
 
-        if now < start_sleep:
-            wait_time = (start_sleep - now).total_seconds()
-            bot.send_message(CHAT_ID, f"Waiting until 20 minutes before sunset... ({wait_time / 60:.1f} minutes left)")
-            time.sleep(wait_time)
-            now = datetime.now(TIMEZONE)
+    super_agent = response.json()["INFO"]["superagent"]
+    agent = response.json()["INFO"]["agent"]
 
-        # Wait until after sunset the next day
-        wait_time = (end_sleep - now).total_seconds()
-        bot.send_message(CHAT_ID, f"Shabbat/Holiday started, resuming after sunset tomorrow.")
-        time.sleep(wait_time)
+    all_user_data = {
+        "club" : club,
+        "super_agent" : super_agent,
+        "agent" : agent,
+        "user_id" : user_id,
+        "username" : username,
+        "role" : role,
+        "rake" : rake,
+        "winlose" : winlose
+    }
 
-        bot.send_message(CHAT_ID, "Shabbat/Holiday is over. Resuming regular execution.")
+    #print(all_user_data)
 
-# =======================
-# Telegram Bot Handlers
-# =======================
-@bot.message_handler(commands=['status'])
-def send_status(message):
-    if running:
-        bot.reply_to(message, "The script is running normally.")
-    else:
-        bot.reply_to(message, "The script is currently paused for Shabbat or a holiday.")
 
-# Start polling for Telegram messages
-#bot.polling(none_stop=True)
 
-# =======================
-# Main Loop
-# =======================
-running = True
-def main_loop():
-    while running:
-        wait_until_after_shabbat_or_holiday()
-        print(f"Regular execution at {datetime.now(TIMEZONE)}")
-        time.sleep(1800)  # 30 minutes
-
-if __name__ == "__main__":
-    main_loop()
+get_players_data(login)
