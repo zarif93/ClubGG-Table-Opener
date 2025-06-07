@@ -8,9 +8,15 @@ from clubgg_session import is_logged_in
 import os
 from dotenv import load_dotenv ,dotenv_values
 import ast
+import telebot
 
 load_dotenv()
 bot_token = os.getenv("TOKEN")
+
+def chacker(mass, bool):
+    bot = telebot.TeleBot(bot_token)
+    chat_id = '7867265740'
+    bot.send_message(chat_id, mass, disable_notification=bool)
 
 def load_allowed_users():
     # טוען את משתני הסביבה מחדש

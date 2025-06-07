@@ -3,6 +3,7 @@ from hendler import get_last_monday, get_time_israel
 from datetime import datetime, timedelta
 import requests
 import time
+from telegrambot import chacker
 
 delay = 3
 
@@ -199,13 +200,13 @@ def open_missing_tables(session):
         response = session.post("https://union.clubgg.com/template", data=data)
         
         if response.status_code == 200:
-            print("✅ Missing tables opened successfully.")
+            chacker("✅ Missing tables opened successfully.")
         else:
-            print(f"❌ Error opening tables: {response.status_code}")
+            chacker(f"❌ Error opening tables: {response.status_code}")
     else:
-        print("🔎 No missing tables found to open.")
+        chacker("🔎 No missing tables found to open.")
 
-    print("🟢 end open missing tables")
+    chacker("🟢 end open missing tables")
 
 def close_tables(session):
     running_table = get_club_running_tables(session)
