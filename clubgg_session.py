@@ -40,7 +40,7 @@ def login_to_clubgg():
         browser = p.firefox.launch(headless=True)  # או השמטת headless, זה ברירת מחדל
         context = browser.new_context()
         page = context.new_page()
-        page.goto("https://union.clubgg.com/login", timeout=60000)
+        page.goto("https://union.clubgg.com/login", timeout=15000)
         # ...
         print("Navigation complete")
 
