@@ -37,7 +37,7 @@ def login_to_clubgg():
     password = os.getenv("PASSWORD")
 
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
+        browser = p.chromium.launch(headless=True)
         context = browser.new_context()
         page = context.new_page()
         page.set_extra_http_headers(HEADERS)
