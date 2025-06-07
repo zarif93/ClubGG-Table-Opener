@@ -43,7 +43,9 @@ def login_to_clubgg():
             viewport={"width": 1280, "height": 720}
         )
         page = context.new_page()
-        page.goto("https://union.clubgg.com/login", timeout=15000)
+        print("Starting navigation to login page...")
+        page.goto("https://union.clubgg.com/login", wait_until="domcontentloaded", timeout=60000)
+        print("Page loaded")
         # ...
         print("Navigation complete")
 
