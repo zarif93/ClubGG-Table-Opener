@@ -13,11 +13,6 @@ import telebot
 load_dotenv()
 bot_token = os.getenv("TOKEN")
 
-def chacker(mass):
-    bot = telebot.TeleBot(bot_token)
-    chat_id = '7867265740'
-    bot.send_message(chat_id, mass)
-
 def load_allowed_users():
     # טוען את משתני הסביבה מחדש
     load_dotenv()  # טוען את משתני הסביבה מחדש מקובץ ה- .env

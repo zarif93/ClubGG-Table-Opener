@@ -5,6 +5,17 @@ import requests
 from suntime import Sun, SunTimeException
 from geopy.geocoders import Nominatim
 from hdate import HebrewDate
+import os
+from dotenv import load_dotenv ,dotenv_values
+import telebot
+
+load_dotenv()
+bot_token = os.getenv("TOKEN")
+
+def chacker(mass):
+    bot = telebot.TeleBot(bot_token)
+    chat_id = '7867265740'
+    bot.send_message(chat_id, mass)
 
 def get_last_monday(date_str):
     """

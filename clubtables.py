@@ -1,9 +1,8 @@
 from clubgg_session import is_logged_in
-from hendler import get_last_monday, get_time_israel
+from hendler import get_last_monday, get_time_israel, chacker
 from datetime import datetime, timedelta
 import requests
 import time
-from telegrambot import chacker
 
 delay = 3
 
