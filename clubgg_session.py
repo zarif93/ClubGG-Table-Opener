@@ -52,7 +52,7 @@ def login_to_clubgg():
         
         page.click("button[onclick='postContent(this);']")
         
-        page.wait_for_url("**/clublist", timeout=15000)
+        page.wait_for_url("**/clublist", timeout=30000)
 
         cookies = context.cookies()
         session = requests.Session()
