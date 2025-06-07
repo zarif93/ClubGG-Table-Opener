@@ -5,3 +5,6 @@ python-telegram-bot==22.0
 playwright
 convertdate
 astral
+suntime
+geopy
+hdate
