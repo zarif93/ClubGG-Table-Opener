@@ -37,21 +37,12 @@ def login_to_clubgg():
     password = os.getenv("PASSWORD")
 
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True, slow_mo=500)  # או השמטת headless, זה ברירת מחדל
-        context = browser.new_context(
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            viewport={"width": 1280, "height": 720}
-        )
+        browser = p.firefox.launch(headless=True)
+        context = browser.new_context()
         page = context.new_page()
-        print("Starting navigation to login page...")
-        page.goto("https://union.clubgg.com/login", wait_until="networkidle", timeout=60000)
-        print("Page loaded")
-        # ...
-        print("Navigation complete")
-
-        print("Page content snippet:", page.content()[:500])  # הדפסת תוכן הדף ל-500 תווים
-
-        # המשך הלוגין כמו בקוד שלך...
+        page.set_extra_http_headers(HEADERS)
+        page.goto("https://union.clubgg.com/login", timeout=60000)
+        
         page.wait_for_selector("#id")
         page.fill("#id", username)
         
