@@ -1,5 +1,5 @@
 from clubgg_session import is_logged_in
-from hendler import get_last_monday, get_time_israel, chacker
+from hendler import get_last_monday, get_time_israel
 from datetime import datetime, timedelta
 import requests
 import time
@@ -199,13 +199,13 @@ def open_missing_tables(session):
         response = session.post("https://union.clubgg.com/template", data=data)
         
         if response.status_code == 200:
-            chacker("✅ Missing tables opened successfully.")
+            print("✅ Missing tables opened successfully.")
         else:
-            chacker(f"❌ Error opening tables: {response.status_code}")
+            print(f"❌ Error opening tables: {response.status_code}")
     else:
-        chacker("🔎 No missing tables found to open.")
+        print("🔎 No missing tables found to open.")
 
-    chacker("🟢 end open missing tables")
+    print("🟢 end open missing tables")
 
 def close_tables(session):
     running_table = get_club_running_tables(session)
