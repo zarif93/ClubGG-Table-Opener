@@ -33,27 +33,46 @@ def load_session_from_file():
     return session
 
 def login_to_clubgg():
-    print("Logging in to ClubGG...")
+    print("🔐 Logging in to ClubGG...")
     username = os.getenv("CLUBUSER")
     password = os.getenv("PASSWORD")
 
     with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
+        browser = p.firefox.launch(headless=True, slow_mo=100)  # DEBUG MODE
         context = browser.new_context()
         page = context.new_page()
         page.set_extra_http_headers(HEADERS)
-        page.goto("https://union.clubgg.com/login", timeout=60000)
-        
-        page.wait_for_selector("#id")
-        page.fill("#id", username)
-        
-        page.wait_for_selector("#pwd")
-        page.fill("#pwd", password)
-        
-        page.click("button[onclick='postContent(this);']")
-        
-        page.wait_for_url("**/clublist", timeout=30000)
 
+        try:
+            print("🔄 Going to login page...")
+            page.goto("https://union.clubgg.com/login", timeout=60000)
+        except Exception as e:
+            print("❌ Failed to load login page:", e)
+            browser.close()
+            raise
+
+        try:
+            page.wait_for_selector("#id", timeout=10000)
+            page.fill("#id", username)
+            page.wait_for_selector("#pwd", timeout=10000)
+            page.fill("#pwd", password)
+            page.click("button[onclick='postContent(this);']")
+        except Exception as e:
+            print("❌ Failed during form interaction:", e)
+            browser.close()
+            raise
+
+        try:
+            print("⏳ Waiting for clublist URL...")
+            page.wait_for_url("**/clublist", timeout=60000)  # more time
+        except Exception as e:
+            print("❌ Timeout waiting for clublist page:", e)
+            print("🌐 Current URL:", page.url)
+            page.screenshot(path="login_fail.png")
+            browser.close()
+            raise
+
+        print("✅ Login successful. Saving session.")
         cookies = context.cookies()
         session = requests.Session()
         session.headers.update(HEADERS)
@@ -62,8 +81,8 @@ def login_to_clubgg():
 
         save_session_to_file(session)
         browser.close()
-        print("Login successful. Session saved.")
         return session
+
 
 def is_logged_in():
     session = load_session_from_file()
