@@ -29,6 +29,7 @@ def get_time_israel():
     """
     מחזירה את השעה הנוכחית בישראל (כ- string).
     """
-    israel_tz = pytz.timezone('Asia/Jerusalem')
+    israel_tz = pytz.timezone('America/Mexico_City')
     now = datetime.now(israel_tz)
     return now.strftime('%m/%d/%Y')
+
