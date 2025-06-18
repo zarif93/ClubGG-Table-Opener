@@ -73,7 +73,9 @@ def get_club_running_tables(session):
             "game": "0",
             "state": state,
             "blindstr": "0",
-            "cur_page": "1"
+            "cur_page": "1",
+            "table_name": "",
+            "generate_type": "0"
         }
 
         response = session.post("https://union.clubgg.com/ringlist", data=data)
@@ -132,7 +134,9 @@ def get_club_running_tables_by_game(session, game):
             "game": game,
             "state": state,
             "blindstr": "0",
-            "cur_page": "1"
+            "cur_page": "1",
+            "table_name": "",
+            "generate_type": "0"
         }
 
         response = session.post("https://union.clubgg.com/ringlist", data=data)
@@ -140,6 +144,7 @@ def get_club_running_tables_by_game(session, game):
         if response.status_code == 200:
             try:
                 response_data = response.json()
+                print(response_data)
                 totpage = int(response_data['PAGE'].get('tot_pages', 1))
                 print(f"🗂️ Total Pages for game {game} (state {state}): {totpage}")
 
