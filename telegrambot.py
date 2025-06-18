@@ -252,6 +252,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     elif action == 'open_missing_tables':
+        running = False
         # שלב 1: שולחים קודם הודעה "פותח שולחנות..."
         await query.edit_message_text(
             "פותח שולחנות... ⏳",
