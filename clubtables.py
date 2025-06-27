@@ -212,6 +212,10 @@ def open_missing_tables(session):
     print("🟢 end open missing tables")
 
 def close_tables(session):
+
+    # cancel all recurring tables
+    recurring_tables(session)
+
     running_table = get_club_running_tables(session)
 
     for game, tables in running_table.items():
@@ -307,3 +311,62 @@ def change_table_status(session, data):
     else:
         print(f"❌ Failed to perform '{act}', status code: {response.status_code}")
         return False
+
+def recurring_tables(session):
+
+    data = {
+        "iam": "list",
+        "gtype": "1",
+        "game": "0",
+        "recurring_yn": "99", 
+        "cur_page": "1"
+    }
+    response = session.post("https://union.clubgg.com/recurring", data=data)
+    
+    if response.status_code == 200:
+        response_data = response.json()
+        
+        if response_data.get('DATA') and response_data['PAGE'].get('tot_pages', 0) > 0:
+            totpage = response_data['PAGE']['tot_pages']
+            
+            for curpage in range(totpage, 0, -1):
+                data = {
+                    "iam": "list",
+                    "gtype": "1",
+                    "game": "0",
+                    "recurring_yn": "99", 
+                    "cur_page": curpage
+                }
+                response = session.post("https://union.clubgg.com/recurring", data=data)
+
+                if response.status_code == 200:
+                    page_data = response.json()
+
+                    for game in page_data.get('DATA', []):
+                            
+                            data = {
+                                "iam": "onoff",
+                                "sino": game['sino'],
+                                "rec_no": game['rec_no'],
+                                "gtype": "1",
+                                "onoff": "1"  # או "0" אם רוצים לכבות את
+                            }
+
+                            response = session.post("https://union.clubgg.com/recurring", data=data)
+
+                            data = {
+                                "iam": "delete",
+                                "sino": game['sino'],
+                                "rec_no": game['rec_no'],
+                                "onoff": "0"  # או "0" אם רוצים לכבות את
+                            }
+
+                            response = session.post("https://union.clubgg.com/recurring", data=data)
+                         
+                            time.sleep(delay)
+                    
+                else:
+                    print(f"❌ Error fetching data for page {curpage}")
+    else:
+        print(f"❌ Error fetching data for game type ")
+
