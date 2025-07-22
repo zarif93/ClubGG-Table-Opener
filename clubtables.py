@@ -3,6 +3,7 @@ from hendler import get_last_monday, get_time_israel
 from datetime import datetime, timedelta
 import requests
 import time
+from hendler import chacker
 
 delay = 3
 
@@ -236,8 +237,10 @@ def close_tables(session):
                     # בדיקה אם הבקשה הצליחה
                     if response.status_code == 200:
                         print(f"✔️  Closed table '{game}' (Index {index}) successfully. (sino: {table['sino']}, tplno: {table['tplno']})")
+                        chacker(f"Closed table '{game}' (Index {index}) successfully. (sino: {table['sino']}, tplno: {table['tplno']})")
                     else:
                         print(f"❌  Failed to close table '{game}' (Index {index}). Status: {response.status_code}")
+                        chacker(f"Failed to close table '{game}' (Index {index}). Status: {response.status_code}")
                 else:
                     print(f"⚠️  Missing data for table '{game}' at index {index}")
         else:
@@ -362,6 +365,12 @@ def recurring_tables(session):
                             }
 
                             response = session.post("https://union.clubgg.com/recurring", data=data)
+                            if response.status_code == 200:
+                                print(f"✅ Processed recurring table: {game['sino']}")
+                                chacker(f"Processed recurring table: {game['sino']}")
+                            else:
+                                print(f"❌ Error processing recurring table: {game['sino']}")
+                                chacker(f"Error processing recurring table: {game['sino']}")
                          
                             time.sleep(delay)
                     

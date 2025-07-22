@@ -11,10 +11,10 @@ import telebot
 
 load_dotenv()
 bot_token = os.getenv("TOKEN")
+chat_id = os.getenv("CHAT_ID")
 
 def chacker(mass):
     bot = telebot.TeleBot(bot_token)
-    chat_id = '7867265740'
     bot.send_message(chat_id, mass)
 
 def get_last_monday(date_str):

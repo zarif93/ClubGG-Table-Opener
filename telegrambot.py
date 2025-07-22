@@ -12,6 +12,7 @@ import telebot
 
 load_dotenv()
 bot_token = os.getenv("TOKEN")
+chat_id = os.getenv("CHAT_ID")
 
 def load_allowed_users():
     # טוען את משתני הסביבה מחדש
@@ -26,8 +27,6 @@ def load_allowed_users():
         return [int(user_id) for user_id in allowed_users.split(',')]
     else:
         return []  # במקרה שאין ערכים
-
-
 
 # משתנה גלובלי שמנהל האם הלולאה פועלת
 running = False
@@ -87,9 +86,9 @@ def loop_function():
 # כפתורים ראשיים בכניסה
 def main_menu_buttons():
     keyboard = [
-        [InlineKeyboardButton("📡 הפעל בוט", callback_data='start_bot')],
+        #[InlineKeyboardButton("📡 הפעל בוט", callback_data='start_bot')],
         [InlineKeyboardButton("➕  פתח שולחנות חסרים" , callback_data='open_missing_tables')],
-        [InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
+        #[InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
         [InlineKeyboardButton("🗑️ מחק שולחנות", callback_data='delete_tables')],
         [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')]
     ]
@@ -98,9 +97,9 @@ def main_menu_buttons():
 # כפתורים אחרי שהבוט פועל
 def active_bot_buttons():
     keyboard = [
-        [InlineKeyboardButton("⛔ עצור בוט", callback_data='stop_bot')],
+        #[InlineKeyboardButton("⛔ עצור בוט", callback_data='stop_bot')],
         [InlineKeyboardButton("➕ פתח שולחנות חסרים" , callback_data='open_missing_tables')],
-        [InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
+        #[InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
         [InlineKeyboardButton("🗑️ מחק שולחנות", callback_data='delete_tables')],
         [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')]
     ]
@@ -167,6 +166,8 @@ def table_menu_buttons(value):
 # התחלת הבוט / כניסה
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     allowed_users = load_allowed_users()
+    user_id = update.effective_user.id
+    print(f"User ID: {user_id}")
     if update.effective_user.id not in allowed_users:
         print(update.message.from_user.id)
         await update.message.reply_text("you are not allowed to use this bot.\n"
