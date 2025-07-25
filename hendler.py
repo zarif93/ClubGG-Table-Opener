@@ -17,7 +17,8 @@ def chacker(mass):
     bot = telebot.TeleBot(bot_token)
     bot.send_message(chat_id, mass)
 
-def get_date_two_weeks_ago(date_str):
+## get two weeks ago
+def get_last_monday(date_str):
     """
     מקבלת תאריך במבנה MM/DD/YYYY ומחזירה את התאריך בדיוק שבועיים אחורה.
     """
