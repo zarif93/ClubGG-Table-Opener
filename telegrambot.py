@@ -166,8 +166,8 @@ def table_menu_buttons(value):
 # התחלת הבוט / כניסה
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     allowed_users = load_allowed_users()
-    user_id = update.effective_user.id
-    print(f"User ID: {user_id}")
+    chat_id = update.effective_chat.id
+    print(f"Chat ID: {chat_id}")
     if update.effective_user.id not in allowed_users:
         print(update.message.from_user.id)
         await update.message.reply_text("you are not allowed to use this bot.\n"
