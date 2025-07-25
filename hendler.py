@@ -17,13 +17,13 @@ def chacker(mass):
     bot = telebot.TeleBot(bot_token)
     bot.send_message(chat_id, mass)
 
-def get_last_monday(date_str):
+def get_date_two_weeks_ago(date_str):
     """
-    מקבלת תאריך במבנה MM/DD/YYYY ומחזירה את יום שני האחרון שהיה (כ- string).
+    מקבלת תאריך במבנה MM/DD/YYYY ומחזירה את התאריך בדיוק שבועיים אחורה.
     """
     input_date = datetime.strptime(date_str, "%m/%d/%Y")
-    last_monday = input_date - timedelta(days=(input_date.weekday() - 0) % 7)
-    return last_monday.strftime("%m/%d/%Y")
+    two_weeks_ago = input_date - timedelta(days=14)
+    return two_weeks_ago.strftime("%m/%d/%Y")
 
 def get_time_israel():
     """
