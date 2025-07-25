@@ -162,7 +162,6 @@ def table_menu_buttons(value):
 
     return InlineKeyboardMarkup(keyboard)
 
-
 # התחלת הבוט / כניסה
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     allowed_users = load_allowed_users()
