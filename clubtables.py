@@ -228,7 +228,8 @@ def close_tables(session):
                     data = {
                         "iam": "disband",
                         "cno": table['sino'],
-                        "tno": table['tplno']
+                        "tno": table['tplno'],
+                        "is_recurring": 0
                     }
                     
                     response = session.post("https://union.clubgg.com/ringinfo", data=data)
