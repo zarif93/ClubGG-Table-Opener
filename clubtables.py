@@ -100,7 +100,8 @@ def get_club_running_tables(session):
 
                             runingtable[key].append({
                                 "sino": game['cno'],
-                                "tplno": game['tno']
+                                "tplno": game['tno'],
+                                "tabale_rno": game['rno']
                             })
                     print(f"✅ Fetched page {curpage} for state {state}")
                 else:
@@ -225,10 +226,12 @@ def close_tables(session):
             for index, table in enumerate(tables):
                 # בדיקה אם המפתחות קיימים
                 if 'sino' in table and 'tplno' in table:
+
                     data = {
                         "iam": "disband",
-                        "cno": table['sino'],
                         "tno": table['tplno'],
+                        "cno": table['sino'],
+                        "rno": table['tabale_rno'],
                         "is_recurring": 0
                     }
                     
