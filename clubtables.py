@@ -1,5 +1,5 @@
 from clubgg_session import is_logged_in
-from hendler import get_last_monday, get_time_israel, get_last_monday_and_week, add_to_env_file, add_club_to_env
+from hendler import get_last_monday, get_time_israel, get_last_monday_and_week, add_to_env_file, add_club_to_all_clubs
 from datetime import datetime, timedelta
 import requests
 import time
@@ -416,8 +416,8 @@ def get_clubs_status(session):
 
     for club in response.json().get('DATA', []):
         club_name    = club.get('f3')
-        if not club_name:
-            add_club_to_env(club_name)
+        if club_name:
+            add_club_to_all_clubs(club_name)
         club_rake    = round(float(club.get('f8').replace(",", "")) / 1000, 1)
         club_summery = round(float(club.get('f11').replace(",", "")) / 1000, 1)
         club_jp      = round(float(club.get('f15').replace(",", "")) / 1000, 1)

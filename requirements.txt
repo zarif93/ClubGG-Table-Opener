@@ -10,3 +10,4 @@ geopy
 hdate
 tabulate
 pandas
+matplotlib

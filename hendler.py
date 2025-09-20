@@ -51,66 +51,46 @@ def add_to_env_file(key, value, filename=".env"):
     with open(filename, "a", encoding="utf-8") as f:
         f.write(line)
 
-def add_club_to_env(club_name, value, env_file=".env"):
-    """
-    מוסיף קלאב ל-ENV עם הערך הנתון (ללא גרשים)
-    value צריך להיות מחרוזת כמו: "60.0,50.0"
-    """
-    club_name = club_name.replace(" ", "")
-    value = value.replace("'", "").replace('"', "")  # הסרת גרשים אם יש
-
-    # עדכון או הוספת הקלאב בקובץ
-    if os.path.exists(env_file):
-        with open(env_file, "r") as f:
-            lines = f.readlines()
-
-        with open(env_file, "w") as f:
-            found = False
-            for line in lines:
-                if line.startswith(f"{club_name}="):
-                    f.write(f"{club_name}={value}\n")
-                    found = True
-                else:
-                    f.write(line)
-            if not found:
-                f.write(f"{club_name}={value}\n")
-    else:
-        with open(env_file, "w") as f:
-            f.write(f"{club_name}={value}\n")
-
-    # עדכון בזמן ריצה
-    os.environ[club_name] = value
-    """
-    מוסיף קלאב לרשימת ALL_CLUBS בקובץ ENV בלי כפילויות
-    """
+def add_club_to_all_clubs(club_name, env_file=".env"):
     club_name = club_name.replace(" ", "")
 
-    # טען את הקיים
-    all_clubs_str = os.getenv("ALL_CLUBS", "")
-    all_clubs = all_clubs_str.split(",") if all_clubs_str else []
-
-    # הוסף את הקלאב אם הוא לא קיים
-    if club_name not in all_clubs:
-        all_clubs.append(club_name)
-
-    # כתוב מחדש את השורה ALL_CLUBS בקובץ ENV
-    if os.path.exists(env_file):
-        with open(env_file, "r") as f:
-            lines = f.readlines()
-
+    # אם הקובץ לא קיים – צור אותו עם הקלאב
+    if not os.path.exists(env_file):
         with open(env_file, "w") as f:
-            found = False
-            for line in lines:
-                if line.startswith("ALL_CLUBS="):
-                    f.write(f"ALL_CLUBS={','.join(all_clubs)}\n")
-                    found = True
-                else:
-                    f.write(line)
-            if not found:
+            f.write(f"ALL_CLUBS={club_name}\n")
+        os.environ["ALL_CLUBS"] = club_name
+        return
+
+    # קרא את תוכן הקובץ
+    with open(env_file, "r") as f:
+        lines = f.readlines()
+
+    all_clubs = []
+    found = False
+
+    for line in lines:
+        if line.startswith("ALL_CLUBS="):
+            all_clubs = line.strip().split("=")[1].split(",") if line.strip().split("=")[1] else []
+            found = True
+            break
+
+    # אם הקלאב כבר קיים – לא צריך לעדכן
+    if club_name in all_clubs:
+        return
+
+    # הוסף את הקלאב לרשימה
+    all_clubs.append(club_name)
+
+    # כתוב מחדש
+    with open(env_file, "w") as f:
+        updated = False
+        for line in lines:
+            if line.startswith("ALL_CLUBS="):
                 f.write(f"ALL_CLUBS={','.join(all_clubs)}\n")
-    else:
-        # אם הקובץ לא קיים, צור אותו עם השורה
-        with open(env_file, "w") as f:
+                updated = True
+            else:
+                f.write(line)
+        if not updated:
             f.write(f"ALL_CLUBS={','.join(all_clubs)}\n")
 
     # עדכון בזמן ריצה

@@ -359,8 +359,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         # מריצים את הפונקציה שאוספת מידע
-        get_status_var = await handle_get_status()
-        print(get_status_var)
+        await handle_get_status()
 
         # שולחים את הטבלה כתמונה בטלגרם
         with open("clubs_table.png", "rb") as photo:
@@ -371,7 +370,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif action == 'get_table':
 
-        # שלב 1: קודם שולחים הודעה שמוחקים שולחנות
         await query.edit_message_text(
             "מחפש שולחנות פעילים ... ⏳",
             reply_markup=None
