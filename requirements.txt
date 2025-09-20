@@ -8,3 +8,5 @@ astral
 suntime
 geopy
 hdate
+tabulate
+pandas
