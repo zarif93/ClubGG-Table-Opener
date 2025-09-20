@@ -418,9 +418,9 @@ def get_clubs_status(session):
         club_name    = club.get('f3')
         if club_name:
             add_club_to_all_clubs(club_name)
-        club_rake    = round(float(club.get('f8').replace(",", "")) / 1000, 1)
-        club_summery = round(float(club.get('f11').replace(",", "")) / 1000, 1)
-        club_jp      = round(float(club.get('f15').replace(",", "")) / 1000, 1)
+        club_rake    = round(float(club.get('f8').replace(",", "")) , 1)
+        club_summery = round(float(club.get('f11').replace(",", "")) , 1)
+        club_jp      = round(float(club.get('f15').replace(",", "")) , 1)
 
         key = club_name.replace(" ", "")
         rake, rebate = [float(x) for x in (os.getenv(key) or (add_to_env_file(key, "50,0") or "50,0")).split(",")]
@@ -467,7 +467,7 @@ def get_clubs_status(session):
     table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc='center', loc='center')
 
     # צבעי zebra striping לכל השורה
-    colors = ["#f0f0f0", "#ffffff"]  # אפור-לבן
+    colors = ["#f0f0f0", "#4e94fd"]  # אפור-לבן
     for i, key in enumerate(table.get_celld().keys()):
         row, col = key
         if row == 0:  # כותרות
