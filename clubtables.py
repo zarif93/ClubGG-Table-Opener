@@ -1,9 +1,16 @@
 from clubgg_session import is_logged_in
-from hendler import get_last_monday, get_time_israel
+from hendler import get_last_monday, get_time_israel, get_last_monday_and_week, add_to_env_file, add_club_to_env
 from datetime import datetime, timedelta
 import requests
 import time
 from hendler import chacker
+from tabulate import tabulate
+import os
+from dotenv import load_dotenv 
+import pandas as pd
+import matplotlib.pyplot as plt
+
+load_dotenv()
 
 delay = 3
 
@@ -383,3 +390,99 @@ def recurring_tables(session):
     else:
         print(f"❌ Error fetching data for game type ")
 
+def get_clubs_status(session):
+
+    start, end = get_last_monday_and_week(get_time_israel())  
+
+    data = {
+        "iam": "list",
+        "from": start,
+        "to": end,
+        "club": "0",
+        "cur_page": "1",
+    }
+    response = session.post("https://union.clubgg.com/r_clubrevenue", data=data)
+
+    data = []
+    club_headers = ["Club", "Jackpot" , "Rake", "Summery", "rakeback%", "rakeback", "rebate%", "rebate", "total"]
+
+    # אתחול משתני סיכום
+    union_rake = 0
+    union_summery = 0
+    union_jp = 0
+    union_rakeback = 0
+    union_rebate = 0
+    union_total = 0
+
+    for club in response.json().get('DATA', []):
+        club_name    = club.get('f3')
+        if not club_name:
+            add_club_to_env(club_name)
+        club_rake    = round(float(club.get('f8').replace(",", "")) / 1000, 1)
+        club_summery = round(float(club.get('f11').replace(",", "")) / 1000, 1)
+        club_jp      = round(float(club.get('f15').replace(",", "")) / 1000, 1)
+
+        key = club_name.replace(" ", "")
+        rake, rebate = [float(x) for x in (os.getenv(key) or (add_to_env_file(key, "50,0") or "50,0")).split(",")]
+
+        club_rakeback = round(club_rake * rake / 100 , 2)
+        club_rebate   = round(club_summery * rebate / 100, 2)
+        club_total    = round(club_rakeback + club_summery + club_rebate, 2)
+
+        # הוספה לרשימת הנתונים
+        data.append([
+            club_name, club_jp, club_rake, club_summery,
+            rake, club_rakeback, rebate, club_rebate, club_total
+        ])
+
+        # סכום מצטבר
+        union_rake      += club_rake
+        union_summery   += club_summery
+        union_jp        += club_jp
+        union_rakeback  += club_rakeback
+        union_rebate    += club_rebate
+        union_total     += club_total
+
+    # אם רוצים, ניתן לעגל את הסכומים ל-2 ספרות אחרי הנקודה
+    union_rake      = round(union_rake, 2)
+    union_summery   = round(union_summery, 2)
+    union_jp        = round(union_jp, 2)
+    union_rakeback  = round(union_rakeback, 2)
+    union_rebate    = round(union_rebate, 2)
+    union_total     = round(union_total, 2)
+
+    data.append([
+            "union total ", union_jp, union_rake, union_summery,
+            "None", union_rakeback, "None", union_rebate, union_total
+        ])
+
+    columns = club_headers
+
+    df = pd.DataFrame(data, columns=columns)
+
+    fig, ax = plt.subplots(figsize=(12, len(df)*0.5))
+    ax.axis('off')
+
+    # יצירת הטבלה
+    table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc='center', loc='center')
+
+    # צבעי zebra striping לכל השורה
+    colors = ["#f0f0f0", "#ffffff"]  # אפור-לבן
+    for i, key in enumerate(table.get_celld().keys()):
+        row, col = key
+        if row == 0:  # כותרות
+            table[key].set_facecolor("#cccccc")
+        else:
+            table[key].set_facecolor(colors[(row-1) % 2])  # כל שורה בצבע אחר
+
+    # עיצוב
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.5)
+
+    # שמירה לקובץ PNG
+    plt.savefig("clubs_table.png", bbox_inches='tight', dpi=150)
+    plt.close()
+
+    time.sleep(5)
+    

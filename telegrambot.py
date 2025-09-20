@@ -2,11 +2,11 @@ import threading
 import asyncio
 import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
-from clubtables import close_tables, open_missing_tables, open_more_tables, get_club_running_tables_by_game, change_table_status
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, ConversationHandler, MessageHandler, filters
+from clubtables import close_tables, open_missing_tables, open_more_tables, get_club_running_tables_by_game, change_table_status, get_clubs_status
 from clubgg_session import is_logged_in
 import os
-from dotenv import load_dotenv ,dotenv_values
+from dotenv import load_dotenv ,dotenv_values, set_key
 import ast
 import telebot
 
@@ -31,6 +31,9 @@ def load_allowed_users():
 # משתנה גלובלי שמנהל האם הלולאה פועלת
 running = False
 
+def change_status_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    return WAITING_FOR_INPUT
+
 def run_open_missing_tables():
     # פונקציה רגילה שמריצה את כל הפעולות
     session = is_logged_in()
@@ -48,6 +51,14 @@ def run_open_tables():
 async def handle_open_tables():
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, run_open_tables)
+
+def run_get_status():
+    session = is_logged_in()
+    return get_clubs_status(session)
+
+async def handle_get_status():
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, run_get_status)
 
 def run_close_tables():
     session = is_logged_in()
@@ -90,7 +101,9 @@ def main_menu_buttons():
         [InlineKeyboardButton("➕  פתח שולחנות חסרים" , callback_data='open_missing_tables')],
         #[InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
         [InlineKeyboardButton("🗑️ מחק שולחנות", callback_data='delete_tables')],
-        [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')]
+        [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')],
+        [InlineKeyboardButton("עדכון קלאבים", callback_data='update_status')],
+        [InlineKeyboardButton("סטטיסקת היונין", callback_data='get_status')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -101,7 +114,9 @@ def active_bot_buttons():
         [InlineKeyboardButton("➕ פתח שולחנות חסרים" , callback_data='open_missing_tables')],
         #[InlineKeyboardButton("➕➕ פתח שולחנות", callback_data='open_tables')],
         [InlineKeyboardButton("🗑️ מחק שולחנות", callback_data='delete_tables')],
-        [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')]
+        [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')],
+        [InlineKeyboardButton("עדכון קלאבים", callback_data='update_status')],
+        [InlineKeyboardButton("סטטיסקת היונין", callback_data='get_status')]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -162,6 +177,22 @@ def table_menu_buttons(value):
 
     return InlineKeyboardMarkup(keyboard)
 
+def status_buttons():
+    keyboard = []
+
+    clubs = os.getenv("ALL_CLUBS", "")
+
+    clubs_list = clubs.split(",") if clubs else []
+
+    for club in clubs_list:
+        if club:  # ודא שהמחרוזת לא ריקה
+            keyboard.append([InlineKeyboardButton(club, callback_data=f"change_status|{club}")])
+
+    # כפתור חזור לתפריט הראשי
+    keyboard.append([InlineKeyboardButton("🔙 חזור לתפריט הראשי", callback_data='go_to_start')])
+
+    return InlineKeyboardMarkup(keyboard)
+
 # התחלת הבוט / כניסה
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     allowed_users = load_allowed_users()
@@ -192,6 +223,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             " אם יש 2 שולחנות עם אותו השם הבוט סוגר רק אחד מהשולחנות ",
             reply_markup=main_menu_buttons()
         )
+
+WAITING_FOR_INPUT = 1
 
 # טיפול בכפתורים
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -277,16 +310,64 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_close_tables()
 
         # שלב 3: אחרי סיום, מעדכנים את ההודעה
-        await query.message.edit_text(
-            "✅ מחקת שולחנות ידנית!",
-            reply_markup=main_menu_buttons() if not running else active_bot_buttons()
+        await query.edit_message_text(
+            "כל השולחנות נסגרו ✅",
+            reply_markup=main_menu_buttons()
         )
+
     elif action == 'get_tables':
 
         await query.message.edit_text(
             "איזה סוג שולחן אתה רוצה לשנות?",
             reply_markup=tables_menu_buttons()
         )
+    
+    elif action == 'update_status':
+        # עדכון ההודעה למצב "טוען"
+        await query.edit_message_text(
+            "איזה קלאב לשנות ? ⏳",
+            reply_markup=status_buttons()
+        )
+
+    elif action == 'change_status':
+        club_name = value
+        env_value = os.getenv(club_name)
+        if env_value is None:
+            await query.edit_message_text(f"לא נמצא ערך עבור הקלאב {club_name}")
+            return
+        rake, rebate = env_value.split(',')
+        
+        context.user_data['current_club'] = club_name
+
+        await query.edit_message_text(
+            f"לקלאב {club_name} יש כרגע:\n"
+            f"רייק: {rake}\n"
+            f"ריבייט: {rebate}\n"
+            "הנכנס החזר וריבייט באחוזים \n"
+            "לדוגמא 55.5,11.5 \n",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 חזור לתפריט הראשי", callback_data="go_to_start")]])
+
+        )
+
+        context.user_data['awaiting_numbers'] = True
+
+    elif action == 'get_status':
+        # עדכון ההודעה למצב "טוען"
+        await query.edit_message_text(
+            "אוסף את סטטיסטיקת היונין... ⏳",
+            reply_markup=None
+        )
+
+        # מריצים את הפונקציה שאוספת מידע
+        get_status_var = await handle_get_status()
+        print(get_status_var)
+
+        # שולחים את הטבלה כתמונה בטלגרם
+        with open("clubs_table.png", "rb") as photo:
+            await query.message.reply_photo(photo=photo)
+
+        # מחזירים את המשתמש להתחלת התפריט
+        await start(update, context)
 
     elif action == 'get_table':
 
@@ -320,6 +401,41 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await start(update, context)  # פשוט מפעיל את start מחדש
         return
 
+# שלב הבא – טיפול בקלט המשתמש
+async def receive_new_values(update, context):
+    text = update.message.text.strip()
+    parts = text.split(',')
+    
+    if len(parts) != 2:
+        await update.message.reply_text("פורמט לא נכון! הזן כך: רייק,ריבייט")
+        return  # השאירו את המשתמש באותו שלב
+    
+    try:
+        rake = float(parts[0])
+        rebate = float(parts[1])
+    except ValueError:
+        await update.message.reply_text("אנא הזן מספרים חוקיים!")
+        return
+    
+    club_name = context.user_data.get('current_club')
+    if not club_name:
+        await update.message.reply_text("לא נמצא קלאב פעיל.")
+        return
+    
+    # עדכון ENV בקובץ .env
+    set_key(".env", club_name, f"{rake},{rebate}")
+
+    os.environ[club_name] = f"{rake},{rebate}"
+    
+    await update.message.reply_text(
+        f"לקלאב {club_name} עודכן:\n"
+        f"רייק: {rake}\n"
+        f"ריבייט: {rebate}",
+        reply_markup=main_menu_buttons() if not running else active_bot_buttons()
+    )
+
+    # אפשר לנקות את המשתנה לאחר עדכון
+    context.user_data.pop('current_club', None)
 
 # יצירת הבוט
 app = ApplicationBuilder().token(bot_token).build()
@@ -327,6 +443,7 @@ app = ApplicationBuilder().token(bot_token).build()
 # חיבור הפקודות
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CallbackQueryHandler(button_handler))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, receive_new_values))
 
 # הפעלת הבוט
 print("Starting bot...")
