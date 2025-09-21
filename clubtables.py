@@ -427,8 +427,8 @@ def get_clubs_status(session):
 
         club_rakeback = round(club_rake * rake / 100, 2)
         total = club_rakeback + club_summery
-        club_rebate   = round(total * rebate / 100, 2)
-        club_total    = round(total - club_rebate, 2)
+        club_rebate   = -round(total * rebate / 100, 2)
+        club_total    = round(total + club_rebate, 2)
 
         # הוספה לרשימת הנתונים
         data.append([
