@@ -425,9 +425,10 @@ def get_clubs_status(session):
         key = club_name.replace(" ", "")
         rake, rebate = [float(x) for x in (os.getenv(key) or (add_to_env_file(key, "50,0") or "50,0")).split(",")]
 
-        club_rakeback = round(club_rake * rake / 100 , 2)
-        club_rebate   = round(club_summery * rebate / 100, 2)
-        club_total    = round(club_rakeback + club_summery + club_rebate, 2)
+        club_rakeback = round(club_rake * rake / 100, 2)
+        total = club_rakeback + club_summery
+        club_rebate   = round(total * rebate / 100, 2)
+        club_total    = round(total - club_rebate, 2)
 
         # הוספה לרשימת הנתונים
         data.append([
