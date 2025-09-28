@@ -52,13 +52,13 @@ async def handle_open_tables():
     loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, run_open_tables)
 
-def run_get_status():
+def run_get_status(club_name):
     session = is_logged_in()
-    return get_clubs_status(session)
+    return get_clubs_status(session, club_name)
 
-async def handle_get_status():
+async def handle_get_status(club_name=None):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, run_get_status)
+    return await loop.run_in_executor(None, lambda: run_get_status(club_name))
 
 def run_close_tables():
     session = is_logged_in()
@@ -103,7 +103,8 @@ def main_menu_buttons():
         [InlineKeyboardButton("🗑️ מחק שולחנות", callback_data='delete_tables')],
         [InlineKeyboardButton("שינוי שולחן", callback_data='get_tables')],
         [InlineKeyboardButton("עדכון קלאבים", callback_data='update_status')],
-        [InlineKeyboardButton("סטטיסקת היונין", callback_data='get_status')]
+        [InlineKeyboardButton("סטטיסקת היונין", callback_data='get_status')],
+        [InlineKeyboardButton("סטטיסטיקה לקלאב ", callback_data='get_status_club')],
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -177,21 +178,35 @@ def table_menu_buttons(value):
 
     return InlineKeyboardMarkup(keyboard)
 
-def status_buttons():
+def status_buttons(data):
     keyboard = []
 
     clubs = os.getenv("ALL_CLUBS", "")
 
     clubs_list = clubs.split(",") if clubs else []
 
-    for club in clubs_list:
-        if club:  # ודא שהמחרוזת לא ריקה
-            keyboard.append([InlineKeyboardButton(club, callback_data=f"change_status|{club}")])
+    if data == "show":
+        for club in clubs_list:
+            if club:  # ודא שהמחרוזת לא ריקה
+                keyboard.append([InlineKeyboardButton(club, callback_data=f"show_club_status|{club}")])
 
-    # כפתור חזור לתפריט הראשי
-    keyboard.append([InlineKeyboardButton("🔙 חזור לתפריט הראשי", callback_data='go_to_start')])
+        # כפתור מיוחד לחמוצי 
+        keyboard.append([InlineKeyboardButton("חמוצי", callback_data=f"show_club_status|hamozi")])
 
-    return InlineKeyboardMarkup(keyboard)
+        # כפתור חזור לתפריט הראשי
+        keyboard.append([InlineKeyboardButton("🔙 חזור לתפריט הראשי", callback_data='go_to_start')])
+
+        return InlineKeyboardMarkup(keyboard)
+    
+    elif data == "change":
+        for club in clubs_list:
+            if club:  # ודא שהמחרוזת לא ריקה
+                keyboard.append([InlineKeyboardButton(club, callback_data=f"change_status|{club}")])
+
+        # כפתור חזור לתפריט הראשי
+        keyboard.append([InlineKeyboardButton("🔙 חזור לתפריט הראשי", callback_data='go_to_start')])
+
+        return InlineKeyboardMarkup(keyboard)
 
 # התחלת הבוט / כניסה
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -322,14 +337,35 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=tables_menu_buttons()
         )
     
+    elif action == 'get_status_club':
+
+        await query.message.edit_text(
+            "איזה קלאב להציג  ? ⏳",
+            reply_markup=status_buttons("show")
+        )
+
     elif action == 'update_status':
         # עדכון ההודעה למצב "טוען"
         await query.edit_message_text(
             "איזה קלאב לשנות ? ⏳",
-            reply_markup=status_buttons()
+            reply_markup=status_buttons("change")
         )
 
-    elif action == 'change_status':
+    elif action == 'show_club_status':
+
+        club_name = value
+
+        # מריצים את הפונקציה שאוספת מידע
+        await handle_get_status(club_name)
+
+        # שולחים את הטבלה כתמונה בטלגרם
+        with open("clubs_table.png", "rb") as photo:
+            await query.message.reply_photo(photo=photo)
+
+        # מחזירים את המשתמש להתחלת התפריט
+        await start(update, context)
+
+    elif action == 'change_status': 
         club_name = value
         env_value = os.getenv(club_name)
         if env_value is None:
@@ -357,7 +393,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "אוסף את סטטיסטיקת היונין... ⏳",
             reply_markup=None
         )
-
+        
         # מריצים את הפונקציה שאוספת מידע
         await handle_get_status()
 

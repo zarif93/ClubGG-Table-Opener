@@ -390,7 +390,7 @@ def recurring_tables(session):
     else:
         print(f"❌ Error fetching data for game type ")
 
-def get_clubs_status(session):
+def get_clubs_status(session, club_name_show=None):
 
     start, end = get_last_monday_and_week(get_time_israel())  
 
@@ -415,15 +415,26 @@ def get_clubs_status(session):
     union_total = 0
 
     for club in response.json().get('DATA', []):
-        club_name    = club.get('f3')
+        club_name = club.get('f3')
         if club_name:
             add_club_to_all_clubs(club_name)
+
         club_rake    = round(float(club.get('f8').replace(",", "")) , 1)
         club_summery = round(float(club.get('f11').replace(",", "")) , 1)
         club_jp      = round(float(club.get('f15').replace(",", "")) , 1)
 
         key = club_name.replace(" ", "")
         rake, rebate = [float(x) for x in (os.getenv(key) or (add_to_env_file(key, "50,0") or "50,0")).split(",")]
+    
+        if club_name_show:
+            if club_name_show == "hamozi":
+                hamozi_clubs = ["Bigbearnoil", "FAIRPLAYONLY", "MonkeysStars", "PandaBear", "Thebigbear"]
+                if key not in hamozi_clubs:
+                    print(f"Processing club: {key}")
+                    continue
+            elif club_name_show != key:
+                print(f"Skipping club: {key} (looking for {club_name_show})")
+                continue
 
         club_rakeback = round(club_rake * rake / 100, 2)
         total = club_rakeback + club_summery
@@ -484,6 +495,3 @@ def get_clubs_status(session):
     # שמירה לקובץ PNG
     plt.savefig("clubs_table.png", bbox_inches='tight', dpi=150)
     plt.close()
-
-    time.sleep(5)
-    
