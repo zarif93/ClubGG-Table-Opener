@@ -1,9 +1,9 @@
 import os
+import re 
 import pickle
 import requests
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
-
+from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
 load_dotenv()
 
 SESSION_FILE = os.getenv("SESSION_FILE") + ".pkl"
@@ -51,7 +51,16 @@ def login_to_clubgg():
         
         page.click("button[onclick='postContent(this);']")
         
-        page.wait_for_url("**/clublist", timeout=15000)
+        #page.wait_for_url("**/clublist", timeout=15000)
+
+       # page.wait_for_url(re.compile("clublist"), timeout=60000)
+
+        try:
+            page.wait_for_url("**/clublist", timeout=60000)
+        except PlaywrightTimeoutError:
+            print("⚠️ clublist not loaded in time, continuing anyway...")
+            print("Current URL:", page.url)
+
 
         cookies = context.cookies()
         session = requests.Session()
