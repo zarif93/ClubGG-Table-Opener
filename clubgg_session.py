@@ -51,16 +51,7 @@ def login_to_clubgg():
         
         page.click("button[onclick='postContent(this);']")
         
-        #page.wait_for_url("**/clublist", timeout=15000)
-
-       # page.wait_for_url(re.compile("clublist"), timeout=60000)
-
-        try:
-            page.wait_for_url("**/clublist", timeout=60000)
-        except PlaywrightTimeoutError:
-            print("⚠️ clublist not loaded in time, continuing anyway...")
-            print("Current URL:", page.url)
-
+        page.wait_for_url("**/clublist", timeout=30000)
 
         cookies = context.cookies()
         session = requests.Session()
