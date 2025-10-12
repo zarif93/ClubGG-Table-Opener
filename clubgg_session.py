@@ -10,6 +10,8 @@ SESSION_FILE = os.getenv("SESSION_FILE") + ".pkl"
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Upgrade-Insecure-Requests': '1',
 }
 
 def save_session_to_file(session):
@@ -51,7 +53,13 @@ def login_to_clubgg():
         
         page.click("button[onclick='postContent(this);']")
         
-        page.wait_for_url("**/clublist", timeout=30000)
+        try:
+            page.wait_for_url("**/clublist", timeout=60000)
+        except PlaywrightTimeoutError:
+            print("No redirect detected, checking current URL manually...")
+            print("Current URL:", page.url)
+            page.screenshot(path="login_debug.png")
+            raise
 
         cookies = context.cookies()
         session = requests.Session()
